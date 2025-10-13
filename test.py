@@ -31,7 +31,7 @@ def recomendar_bigfive():
         user_profile = np.array([openness, conscientiousness, extraversion, agreeableness, neuroticism]).reshape(1, -1)
         careers_traits = df[['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']].values
 
-        # Calcular similitud
+        # Calcular similitud 
         similitudes = cosine_similarity(user_profile, careers_traits)[0]
         
         # Crear copia del dataframe
