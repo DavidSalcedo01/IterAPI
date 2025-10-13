@@ -15,13 +15,8 @@ except:
     print("Advertencia: spaCy no está instalado. Usando lematización básica.")
     nlp = None
 
-# Cargar datos
-df = pd.read_csv("data.csv")
-df["contenido"] = df["estado"].fillna("") + " " + df["nombre_y"].fillna("")
-
-# Vectorizar texto para recomendaciones
-vectorizer = TfidfVectorizer()
-tfidf_matrix = vectorizer.fit_transform(df["contenido"])
+# Cargar datos limpios
+df = pd.read_csv("Careers.csv").dropna()
 
 # Crear app Flask
 app = Flask(__name__)
@@ -102,28 +97,6 @@ def procesar_frases_dataframe(df_subset):
     return palabra_freq
 
 
-@app.route("/recomendar", methods=["POST"])
-def recomendar():
-    """Recomienda universidades basado en el interés del usuario"""
-    data = request.get_json()
-    interes = data.get("interes", "")
-
-    if not interes:
-        return jsonify({"error": "Interés no proporcionado"}), 400
-
-    # Vectorizar el interés del usuario
-    interes_vectorizado = vectorizer.transform([interes])
-
-    # Calcular similitud
-    similitudes = cosine_similarity(interes_vectorizado, tfidf_matrix)[0]
-    df["similitud"] = similitudes
-
-    # Seleccionar las top 5 universidades más similares
-    resultados = df.sort_values(by="similitud", ascending=False).head(5)
-
-    # Devolver resultados como JSON
-    respuesta = resultados[["nombre_x", "estado", "nombre_y", "similitud"]].to_dict(orient="records")
-    return jsonify(respuesta), 200
 
 @app.route("/lematizar", methods=["POST"])
 def lematizar():
@@ -228,6 +201,46 @@ def generar_test():
         "total_pares": len(pares),
         "pares": pares
     }), 200
+
+
+
+# ========== RECOMENDACIÓN BIG FIVE ==========
+@app.route("/recomendar-bigfive", methods=["POST"])
+def recomendar_bigfive():
+    """Recomienda universidades basado en perfil Big Five"""
+    data = request.get_json()
+    
+    # Esperar un objeto con los traits
+    openness = data.get("openness", 0.5)
+    conscientiousness = data.get("conscientiousness", 0.5)
+    extraversion = data.get("extraversion", 0.5)
+    agreeableness = data.get("agreeableness", 0.5)
+    neuroticism = data.get("neuroticism", 0.5)
+
+    try:
+        user_profile = np.array([openness, conscientiousness, extraversion, agreeableness, neuroticism]).reshape(1, -1)
+        careers_traits = df[['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']].values
+
+        # Calcular similitud
+        similitudes = cosine_similarity(user_profile, careers_traits)[0]
+        
+        # Crear copia del dataframe
+        df_resultado = df.copy()
+        df_resultado["similitud"] = similitudes
+        
+        # Seleccionar las top 5 universidades más similares
+        resultados = df_resultado.sort_values(by="similitud", ascending=False).head(5)
+        
+        # Devolver resultados
+        respuesta = resultados[["id_institucion", "nombre", "tipo", "area", "escolaridad"]].to_dict(orient="records")
+        
+        return jsonify({
+            "total_resultados": len(respuesta),
+            "recomendaciones": respuesta
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"Error": str(e), "message": "Verifica que las columnas de traits existan en el DataFrame"}), 500
 
 
 
