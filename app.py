@@ -5,7 +5,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import spacy
 from collections import Counter
+import numpy as np
 import re
+import os
 
 # Cargar modelo de spaCy para español
 try:
@@ -247,4 +249,5 @@ def recomendar_bigfive():
 
 # ========== EJECUTAR APP ==========
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
