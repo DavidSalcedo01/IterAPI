@@ -18,7 +18,21 @@ except:
     nlp = None
 
 # Cargar datos limpios
-df = pd.read_csv("Careers.csv").dropna()
+
+df = pd.read_csv("Careers.csv")#.dropna()
+
+#---------------------     Rellenar valores nulos con valores por defecto     ---------------------
+df["palabras_clave_ingreso"] = df["palabras_clave_ingreso"].fillna('["prueba"]')
+df["palabras_clave_egreso"] = df["palabras_clave_egreso"].fillna('["prueba"]')
+df["openness"] = df["openness"].fillna(0.5)
+df["conscientiousness"] = df["conscientiousness"].fillna(0.5)
+df["extraversion"] = df["extraversion"].fillna(0.5)
+df["agreeableness"] = df["agreeableness"].fillna(0.5)
+df["neuroticism"] = df["neuroticism"].fillna(0.5)
+df["area"] = df["area"].fillna("Desconocida")
+df["escolaridad"] = df["escolaridad"].fillna("Desconocida")
+#---------------------------------------------------------------------------------------------------
+
 
 # Crear app Flask
 app = Flask(__name__)
@@ -213,11 +227,11 @@ def recomendar_bigfive():
     data = request.get_json()
     
     # Esperar un objeto con los traits
-    openness = data.get("openness", 0.5)
-    conscientiousness = data.get("conscientiousness", 0.5)
-    extraversion = data.get("extraversion", 0.5)
-    agreeableness = data.get("agreeableness", 0.5)
-    neuroticism = data.get("neuroticism", 0.5)
+    openness = data.get("openness")
+    conscientiousness = data.get("conscientiousness")
+    extraversion = data.get("extraversion")
+    agreeableness = data.get("agreeableness")
+    neuroticism = data.get("neuroticism")
 
     try:
         user_profile = np.array([openness, conscientiousness, extraversion, agreeableness, neuroticism]).reshape(1, -1)
@@ -229,9 +243,9 @@ def recomendar_bigfive():
         # Crear copia del dataframe
         df_resultado = df.copy()
         df_resultado["similitud"] = similitudes
-        
-        # Seleccionar las top 5 universidades más similares
-        resultados = df_resultado.sort_values(by="similitud", ascending=False).head(5)
+
+        # Seleccionar las top 10 universidades más similares
+        resultados = df_resultado.sort_values(by="similitud", ascending=False).head(10)
         
         # Devolver resultados
         respuesta = resultados[["id_institucion", "nombre", "tipo", "area", "escolaridad"]].to_dict(orient="records")
