@@ -244,14 +244,14 @@ def recomendar_bigfive():
         df_resultado = df.copy()
         df_resultado["similitud"] = similitudes
 
-        # Seleccionar las top 5 universidades más similares
+        # Seleccionar las top 3 universidades más similares
         duplicados = df_resultado.drop_duplicates(subset=['nombre'], keep='first')
 
-        resultados = duplicados.sort_values(by="similitud", ascending=False).head(5)
-        
-        # Devolver resultados
-        respuesta = resultados[["id_institucion", "nombre", "tipo", "area", "escolaridad"]].to_dict(orient="records")
-        
+        resultados = duplicados.sort_values(by="similitud", ascending=False).head(3)
+
+        # Devolver resultados (incluye puntaje de similitud)
+        respuesta = resultados[["id_institucion", "nombre", "tipo", "area", "escolaridad", "similitud"]].to_dict(orient="records")
+
         return jsonify({
             "total_resultados": len(respuesta),
             "recomendaciones": respuesta
